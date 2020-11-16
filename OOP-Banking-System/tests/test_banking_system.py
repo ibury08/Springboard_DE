@@ -5,7 +5,7 @@ from banking_system import Account, SavingsAccount, CheckingAccount, Customer, w
 
 def test_account():
     acc = Account(1, 1, 100)
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError):
         acc.withdraw('d')
     with pytest.raises(ValueError):
         acc.withdraw(-10)
@@ -13,7 +13,7 @@ def test_account():
     assert acc.balance == 80
     with pytest.raises(ValueError):
         acc.withdraw(100)
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError):
         acc.deposit('string')
     with pytest.raises(ValueError):
         acc.deposit(-100)
