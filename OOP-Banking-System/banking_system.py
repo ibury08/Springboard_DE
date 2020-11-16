@@ -109,11 +109,11 @@ class Account:
         return f"Account(customer_id={self.customer_id}, id={self.id},balance={self.balance})"
 
     def deposit(self, amount):
-        validate_numeric(amount)
+        amount = validate_numeric(amount)
         self.balance += amount
 
     def withdraw(self, amount):
-        validate_numeric(amount)
+        amount = validate_numeric(amount)
         try:
             if self.balance >= amount:
                 self.balance -= amount
@@ -134,7 +134,7 @@ class SavingsAccount(Account):
         - add_interest(n_periods): Computes interest for the account over n_periods.
         """
 
-    def __init__(self, customer_id, id=None, balance=0, min_balance=1000):
+    def __init__(self, customer_id, id=None, balance=0.0, min_balance=1000.0):
         Account.__init__(self, customer_id, id, balance)
         self.min_balance = min_balance
 
@@ -153,7 +153,7 @@ class SavingsAccount(Account):
 class CheckingAccount(Account):
     """A sub-class of Account, CheckingAccount also charges a $5 overdraft fee for withdrawals that create a negative balance."""
 
-    def __init__(self, customer_id, id=None, balance=0, overdraft_fee=5):
+    def __init__(self, customer_id, id=None, balance=0.0, overdraft_fee=5.0):
         Account.__init__(self, customer_id, id, balance)
         self.overdraft_fee = overdraft_fee
 
@@ -166,17 +166,19 @@ class CheckingAccount(Account):
 def validate_numeric(input):
     """Helper function to check user-input amounts for deposits and withdrawals"""
     try:
-        if not isinstance(input, (int, float)):
-            raise TypeError(f"Input must be numeric. Got: {input}")
+        input_asfloat = float(input)
+
     except Exception as e:
-        logger.exception(str(e))
+        logger.exception(f"Input must be numeric. Got: {input}")
         raise
     try:
-        if input <= 0:
+        if input_asfloat <= 0:
             raise ValueError(f"Input cannot be negative. Got {input}")
     except Exception as e:
         logger.exception(str(e))
         raise
+
+    return input_asfloat
 
 
 def return_logged_in(func):
@@ -220,8 +222,10 @@ def create_account():
     class_choices = {'A': SavingsAccount, 'B': CheckingAccount}
     a = validate_choice(input(menu_str), class_choices)(
         customer_id=active_user.id)
+
     initial_deposit = input("Initial deposit amount? ")
-    validate_numeric(initial_deposit)
+
+    initial_deposit = validate_numeric(initial_deposit)
 
     if isinstance(a, SavingsAccount):
         if initial_deposit < a.min_balance:
@@ -307,8 +311,8 @@ def deposit():
         raise ValueError(f"Please enter a valid account number. Got: {input}")
 
     dep = input("How much to deposit? ")
-    validate_numeric(dep)
-    acct.deposit(float(dep))
+    dep = validate_numeric(dep)
+    acct.deposit(dep)
     rc = update_db(acct, accounts)
     if rc > 0:
         logger.info(f"Deposit successful, new balance: ${acct.balance}")
@@ -325,8 +329,8 @@ def withdraw():
         raise ValueError(f"Please enter a valid account number. Got: {input}")
 
     w = input("How much to withdraw? ")
-    validate_numeric(w)
-    acct.withdraw(float(w))
+    w = validate_numeric(w)
+    acct.withdraw(w)
     rc = update_db(acct, accounts)
     if rc > 0:
         logger.info(f"Withdrawal successful, new balance: ${acct.balance}")

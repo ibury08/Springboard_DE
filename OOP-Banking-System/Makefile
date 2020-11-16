@@ -2,7 +2,7 @@ init:
 	pip install requirements.txt
 
 test:
-	pytest test_banking_system.py
+	python -m pytest tests/
 
 run:
 	python banking_system.py 
