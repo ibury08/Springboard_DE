@@ -170,7 +170,12 @@ class CheckingAccount(Account):
 
 
 def validate_numeric(input):
-    """Helper function to check user-input amounts for deposits and withdrawals"""
+    """Helper function to check that user-input amounts for deposits and withdrawals are positive numerics
+        Args: 
+            input (str) - user input from command line
+        Returns:
+            input_asfloat - (float) converted input to float
+    """
     try:
         input_asfloat = float(input)
 
@@ -187,11 +192,16 @@ def validate_numeric(input):
         return logged_in_main(active_user)
     
 
-    return input
+    return input_asfloat
 
 
 def return_logged_in(func):
-    """Decorator used to return a user to the main menu after completion of the wrapped function"""
+    """Decorator used to return a user to the main menu after completion of the wrapped function
+        Args:
+            func (function) - function to wrap
+        Returns:
+            wrapper - wrapped func
+    """
     def wrapper(*args, **kwargs):
         func(*args, **kwargs)
         return logged_in_main(active_user)
@@ -199,7 +209,8 @@ def return_logged_in(func):
 
 
 def login():
-    """Takes user input for credentials and checks against known users in the database. Stores successful login as global active_user."""
+    """Takes user input for credentials and checks against known users in the database. Stores successful login (e.g. Customer instance) as global active_user.
+    """
     username = input("Username: ")
     pw = sha256(input("Password: ").encode()).hexdigest()
     logger.debug(f"Login attempt: user: {username}")
@@ -257,7 +268,12 @@ def create_account():
 
 
 def create_customer():
-    """Takes user inputs for Customer attributes, creates an instance of Customer, inserts Customer into database and returns to main menu"""
+    """Takes user inputs for Customer attributes, creates an instance of Customer, inserts Customer into database and returns to main menu
+       Args:
+       - input(): (str) input from command line for first_name, last_name, address, username, password
+       Returns:
+       - calls main() to return to main menu, after creating/inserting Customer into DB
+    """
     first_name = input("First Name: ") #TODO should validate for non-numeric string
     last_name = input("Last Name: ")
     address = input("Address: ")
@@ -280,7 +296,11 @@ def create_customer():
 
 
 def logged_in_main(user):
-    """Maps user input to dict of possible functions called via this menu"""
+    """Maps user input to dict of possible functions called via this menu
+       Args:
+           - user: (Customer) 
+       Returns:
+           - func: (function) called from dict of function options"""
     menu_str = f"Welcome {user.first_name}. \n\
         Account menu - Please select from the options below: \n\
         A - Check balance \n\
