@@ -119,10 +119,14 @@ class Account:
                 self.balance -= amount
                 return f'Withdrawl of ${amount} successful, new balance is ${self.balance}'
             else:
-                raise ValueError("Insufficient funds")
+                #raise ValueError("Insufficient funds")
+                logger.info("Insufficient funds")
+                return logged_in_main(active_user)
         except Exception as e:
-            logger.exception(str(e))
-            raise
+            logger.info("Something went wrong")
+            logger.debug(str(e))
+            return logged_in_main(active_user)
+            
 
 
 class SavingsAccount(Account):
@@ -143,11 +147,13 @@ class SavingsAccount(Account):
             if self.balance - amount >= self.min_balance:
                 Account.withdraw(self, amount)
             else:
-                raise ValueError(
+                logger.info(
                     f"Cannot withdraw below minimum balance of ${self.min_balance}")
+                return logged_in_main(active_user)
         except Exception as e:
-            logger.exception(str(e))
-            raise
+            logger.debug()(str(e))
+            logger.info("Something went wrong.")
+            return logged_in_main(active_user)
 
 
 class CheckingAccount(Account):
@@ -168,17 +174,20 @@ def validate_numeric(input):
     try:
         input_asfloat = float(input)
 
-    except Exception as e:
-        logger.exception(f"Input must be numeric. Got: {input}")
-        raise
-    try:
-        if input_asfloat <= 0:
-            raise ValueError(f"Input cannot be negative. Got {input}")
-    except Exception as e:
-        logger.exception(str(e))
-        raise
+        try:
+            if input_asfloat <= 0:
+                logger.info(f"Input cannot be negative. Got {input}")
+                return logged_in_main(active_user)
+        except Exception as e:
+            logger.exception(str(e))
+            return logged_in_main(active_user)
 
-    return input_asfloat
+    except Exception as e:
+        logger.info(f"Input must be numeric. Got: {input}")
+        return logged_in_main(active_user)
+    
+
+    return input
 
 
 def return_logged_in(func):
@@ -208,13 +217,20 @@ def login():
             logged_in_main(active_user)
         else:
             logger.debug(f"Failed login for user: {username}")
-            raise ValueError("Incorrect Password")
+            logger.info("Incorrect Password")
+            return main()
     else:
-        raise KeyError("User does not exist")
+        logger.info("User does not exist")
+        return main()
 
 
 @return_logged_in
 def create_account():
+    """Takes user input choice and creates an instance of a subclass of Account (either SavingsAccount or CheckingAccount) based on input.
+    Args:
+        input() - must be a key of class_choices dict
+    Returns:
+        None - creates instance of either SavingsAccount or CheckingAccount, registers an intial deposit and inserts to db"""
     menu_str = "Which type of account would you like to create? \n\
         A - Savings account \n\
         B - Checking account \n\
@@ -229,8 +245,9 @@ def create_account():
 
     if isinstance(a, SavingsAccount):
         if initial_deposit < a.min_balance:
-            raise ValueError(
+            logger.info(
                 f"Initial deposit must be greater than the minimum balance requirement of ${a.min_balance}.")
+            return logged_in_main(active_user)
     a.balance = initial_deposit
 
     insert_to_db(a, accounts)
@@ -240,7 +257,8 @@ def create_account():
 
 
 def create_customer():
-    first_name = input("First Name: ")
+    """Takes user inputs for Customer attributes, creates an instance of Customer, inserts Customer into database and returns to main menu"""
+    first_name = input("First Name: ") #TODO should validate for non-numeric string
     last_name = input("Last Name: ")
     address = input("Address: ")
     username = input("Username: ")
@@ -281,7 +299,7 @@ def logged_in_main(user):
 def logout():
     """Deletes active_user, which is used to store a user id for a given session"""
     global active_user
-    del active_user
+    active_user = None
     logger.info("Logout successful. Goodbye.")
 
 
@@ -302,13 +320,18 @@ def get_accounts():
 
 @return_logged_in
 def deposit():
-    """Deposits the specified amount into the account chosen by the user"""
+    """Deposits the specified amount into the account chosen by the user
+        Args:
+        input() - command line input from user
+    Returns:
+        None - calls Account.deposit()"""
     accts = get_accounts()
     menu_str = "Which account?"
     try:
         acct = accts[int(input(menu_str))]
     except:
-        raise ValueError(f"Please enter a valid account number. Got: {input}")
+        logger.info(f"Please enter a valid account number. Got: {input}")
+        return logged_in_main(active_user)
 
     dep = input("How much to deposit? ")
     dep = validate_numeric(dep)
@@ -320,13 +343,19 @@ def deposit():
 
 @return_logged_in
 def withdraw():
-    """Withdraws the specified amount from the account chosen by the user."""
+    """Withdraws the specified amount from the account chosen by the user.
+    Args:
+        input() - command line input from user
+    Returns:
+        None - calls Account.withdraw()
+    """
     accts = get_accounts()
     menu_str = "Which account?"
     try:
         acct = accts[int(input(menu_str))]
     except:
-        raise ValueError(f"Please enter a valid account number. Got: {input}")
+        logger.info(f"Please enter a valid account number. Got: {input}")
+        return logged_in_main(active_user)
 
     w = input("How much to withdraw? ")
     w = validate_numeric(w)
@@ -346,7 +375,12 @@ def validate_choice(choice, func_dict):
     try:
         func = func_dict[choice.upper()]
     except:
-        raise ValueError(f"Invalid Selection. Got: {choice}.")
+        #raise ValueError(f"Invalid Selection. Got: {choice}.")
+        logger.info(f"Invalid Selction. Got: {choice}")
+        if active_user is not None:
+            logged_in_main(active_user)
+        else:
+            main()
     return func
 
 
@@ -369,6 +403,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     debug = args.debug
 
+    active_user = None #Instantiate a global variable to store in-session user
     if debug:
         logger.info('---Running in debug mode---')
 
