@@ -1,11 +1,12 @@
 # Setup
 `git clone git@github.com:ibury08/Springboard_DE.git`  
 `cd Springboard_DE/OOP-Banking-System`  
-`make init && make test`  
+`make init && make test`  (or `pip install -r requirements.txt && python -m pytest tests/`)
 
 # Starting the app
-`make run`  
-Or in debug mode for full stacktrace and dev database using `make debug`
+`make run`  (or `python banking_system.py`) 
+
+Or in debug mode for full stacktrace and dev database using `make debug` (or `python banking_system.py --debug`)
 # Background
 This project simulates a simple banking system via the command line, with the data being stored in sqlite database.
 There are two primary classes - Customers and Accounts. A user must create or use an existing Customer instance in order to then access Accounts. The cl provides multiple options across interfaces to create new Accounts and update the attributes of existing accounts. The exhaustive list of user actions is:
