@@ -151,7 +151,7 @@ class SavingsAccount(Account):
                     f"Cannot withdraw below minimum balance of ${self.min_balance}")
                 return logged_in_main(active_user)
         except Exception as e:
-            logger.debug()(str(e))
+            logger.debug(str(e))
             logger.info("Something went wrong.")
             return logged_in_main(active_user)
 
