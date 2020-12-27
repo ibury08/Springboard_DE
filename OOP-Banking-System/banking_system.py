@@ -7,6 +7,7 @@ import sys
 import argparse
 import logging
 import os
+import re
 
 # setup logging
 logger = logging.getLogger('dev')
@@ -114,19 +115,11 @@ class Account:
 
     def withdraw(self, amount):
         amount = validate_numeric(amount)
-        try:
-            if self.balance >= amount:
-                self.balance -= amount
-                return f'Withdrawl of ${amount} successful, new balance is ${self.balance}'
-            else:
-                #raise ValueError("Insufficient funds")
-                logger.info("Insufficient funds")
-                return logged_in_main(active_user)
-        except Exception as e:
-            logger.info("Something went wrong")
-            logger.debug(str(e))
-            return logged_in_main(active_user)
-            
+        if self.balance >= amount:
+            self.balance -= amount
+            return f'Withdrawl of ${amount} successful, new balance is ${self.balance}'
+        else:
+            raise ValueError("Insufficient funds")
 
 
 class SavingsAccount(Account):
@@ -143,17 +136,11 @@ class SavingsAccount(Account):
         self.min_balance = min_balance
 
     def withdraw(self, amount):
-        try:
-            if self.balance - amount >= self.min_balance:
-                Account.withdraw(self, amount)
-            else:
-                logger.info(
-                    f"Cannot withdraw below minimum balance of ${self.min_balance}")
-                return logged_in_main(active_user)
-        except Exception as e:
-            logger.debug(str(e))
-            logger.info("Something went wrong.")
-            return logged_in_main(active_user)
+        if self.balance - amount >= self.min_balance:
+            Account.withdraw(self, amount)
+        else:
+            raise ValueError(
+                f"Cannot withdraw below minimum balance of ${self.min_balance}")
 
 
 class CheckingAccount(Account):
@@ -164,6 +151,7 @@ class CheckingAccount(Account):
         self.overdraft_fee = overdraft_fee
 
     def withdraw(self, amount):
+        validate_numeric(amount)
         if self.balance - amount < 0:
             self.balance -= (amount + self.overdraft_fee)
             return f'Withdrawl of ${amount} successful, new balance is ${self.balance}'
@@ -178,19 +166,10 @@ def validate_numeric(input):
     """
     try:
         input_asfloat = float(input)
-
-        try:
-            if input_asfloat <= 0:
-                logger.info(f"Input cannot be negative. Got {input}")
-                return logged_in_main(active_user)
-        except Exception as e:
-            logger.exception(str(e))
-            return logged_in_main(active_user)
-
-    except Exception as e:
-        logger.info(f"Input must be numeric. Got: {input}")
-        return logged_in_main(active_user)
-    
+        if input_asfloat <= 0:
+            raise ValueError(f"Input cannot be negative. Got {input}")
+    except:
+        raise ValueError(f"Input must be numeric. Got: {input}")
 
     return input_asfloat
 
@@ -274,8 +253,15 @@ def create_customer():
        Returns:
        - calls main() to return to main menu, after creating/inserting Customer into DB
     """
-    first_name = input("First Name: ") #TODO should validate for non-numeric string
+    pattern = re.compile('^[a-zA-Z]+$')
+    first_name = input("First Name: ")
+    while pattern.match(first_name) is None:
+        logger.info('Name must contain only letters.')
+        first_name = input("First Name: ")
     last_name = input("Last Name: ")
+    while pattern.match(last_name) is None:
+        logger.info('Name must contain only letters.')
+        last_name = input("Last Name")
     address = input("Address: ")
     username = input("Username: ")
     password = sha256(input("Password: ").encode()).hexdigest()
@@ -346,7 +332,7 @@ def deposit():
     Returns:
         None - calls Account.deposit()"""
     accts = get_accounts()
-    menu_str = "Which account?"
+    menu_str = "Which account? "
     try:
         acct = accts[int(input(menu_str))]
     except:
@@ -354,8 +340,12 @@ def deposit():
         return logged_in_main(active_user)
 
     dep = input("How much to deposit? ")
-    dep = validate_numeric(dep)
-    acct.deposit(dep)
+    try:
+        dep = validate_numeric(dep)
+        acct.deposit(dep)
+    except Exception as e:
+        logger.info(str(e))
+        return logged_in_main(active_user)
     rc = update_db(acct, accounts)
     if rc > 0:
         logger.info(f"Deposit successful, new balance: ${acct.balance}")
@@ -378,8 +368,13 @@ def withdraw():
         return logged_in_main(active_user)
 
     w = input("How much to withdraw? ")
-    w = validate_numeric(w)
-    acct.withdraw(w)
+
+    try:
+        w = validate_numeric(w)
+        acct.withdraw(w)
+    except Exception as e:
+        logger.info(str(e))
+        return logged_in_main(active_user)
     rc = update_db(acct, accounts)
     if rc > 0:
         logger.info(f"Withdrawal successful, new balance: ${acct.balance}")
@@ -423,7 +418,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     debug = args.debug
 
-    active_user = None #Instantiate a global variable to store in-session user
+    active_user = None  # Instantiate a global variable to store in-session user
     if debug:
         logger.info('---Running in debug mode---')
 

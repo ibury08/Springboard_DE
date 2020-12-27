@@ -2,6 +2,8 @@ import pytest
 import argparse
 from banking_system import Account, SavingsAccount, CheckingAccount, Customer, withdraw, deposit
 
+active_user = Customer('mock', 'user', '123 fake st', 'test', 'creds')
+
 
 def test_account():
     acc = Account(1, 1, 100)
