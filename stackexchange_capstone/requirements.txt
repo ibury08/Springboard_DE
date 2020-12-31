@@ -1,0 +1,4 @@
+pandas==0.24.2
+apache_airflow==1.10.9
+requests==2.22.0
+airflow==0.6
