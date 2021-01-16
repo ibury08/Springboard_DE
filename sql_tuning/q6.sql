@@ -22,7 +22,13 @@ SELECT name FROM Student,
 WHERE id = alias.studId;
 
 --Optimized query
+--*What was the bottleneck?
 -- There's no need to reference Teaching. 
+--How did you identify it?
+-- The IN subquery did not provide a filter clause, thus doing nothing.
+-- What method you chose to resolve the bottleneck
+-- Removed the Teaching subquery, as well as added a CTE to filter down Transcipt (biggest table) earlier on.
+
 with dept8 as (
 select crsCode, studId from (select studID, crscode from Transcript) A
 left join (select crscode from Course where deptId = @v8) B using (crscode)

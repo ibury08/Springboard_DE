@@ -31,4 +31,9 @@ and C.id=Transcript.studId;
 
 -- Note: this query returns an empty set. There are rows for students in the same course number as the
 -- one taught by this professor, albeit in a different semester.
--- Replacing the nested correlated subqueries with joins makes this more efficient.
+-- *What was the bottleneck?
+-- Using multiple correlated subqueries will cause subqueries to run multiple times.
+-- *How did you identify it?
+-- Joining two tables at different levels of nesting
+-- *What method you chose to resolve the bottleneck
+-- Using an inner join instead 
