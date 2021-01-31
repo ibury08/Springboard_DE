@@ -1,1 +1,2 @@
-select count(*) from match_mast where decided_by = 'P';
+
+select count(distinct match_no) from penalty_shootout;
